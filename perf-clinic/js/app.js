@@ -127,16 +127,10 @@ function renderResults(query) {
   rememberViewed(page);
 }
 
-function fitSummaries() {
-  resultsList.querySelectorAll('.result-summary').forEach((cell) => {
-    let size = 14;
-    cell.style.fontSize = size + 'px';
-    while (cell.scrollWidth > cell.clientWidth && size > 11) {
-      size -= 0.5;
-      cell.style.fontSize = size + 'px';
-    }
-  });
-}
+// fitSummaries was a read/write thrash loop (200 cells × N forced layouts each resize).
+// The .result-summary class already has overflow:hidden + white-space:nowrap +
+// text-overflow:ellipsis in app.css — CSS handles truncation for free.
+function fitSummaries() { /* removed — handled by CSS text-overflow:ellipsis */ }
 
 // Pre-build a minute → count Map once instead of filtering 100K events on every scroll.
 const minuteCounts = new Map();
