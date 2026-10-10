@@ -51,18 +51,36 @@ function renderAgents() {
 }
 
 function equalizeCardHeights() {
-  const cards = grid.querySelectorAll('.agent-card');
-  cards.forEach((card) => {
-    card.style.height = '';
-    const rowTop = card.offsetTop;
-    let tallest = Math.max(card.offsetHeight, minCardHeight);
-    cards.forEach((other) => {
-      if (other.offsetTop === rowTop) {
-        tallest = Math.max(tallest, other.offsetHeight);
-      }
-    });
-    card.style.height = tallest + 'px';
+  const cards = Array.from(grid.querySelectorAll('.agent-card'));
+
+  // Reset heights (write), then batch-read all positions in one pass.
+  cards.forEach((card) => { card.style.height = ''; });
+
+  // Read phase: collect offsetTop and offsetHeight for every card at once.
+  const metrics = cards.map((card) => ({
+    card,
+    top: card.offsetTop,
+    height: card.offsetHeight,
+  }));
+
+  // Compute tallest per row using only the already-read metrics (no extra layout).
+  const rowTallest = new Map();
+  metrics.forEach(({ top, height }) => {
+    rowTallest.set(top, Math.max(rowTallest.get(top) ?? minCardHeight, height));
   });
+
+  // Write phase: apply heights all at once.
+  metrics.forEach(({ card, top }) => {
+    card.style.height = rowTallest.get(top) + 'px';
+  });
+}
+
+function debounce(fn, ms) {
+  let id;
+  return (...args) => {
+    clearTimeout(id);
+    id = setTimeout(() => fn(...args), ms);
+  };
 }
 
 function loadViewed() {
@@ -235,8 +253,8 @@ function closeTicker() {
 
 searchInput.addEventListener('input', () => renderResults(searchInput.value));
 window.addEventListener('scroll', onScroll, { passive: true });
-window.addEventListener('resize', equalizeCardHeights);
-window.addEventListener('resize', fitSummaries);
+window.addEventListener('resize', debounce(equalizeCardHeights, 100));
+window.addEventListener('resize', debounce(fitSummaries, 100));
 resultsList.addEventListener('mousemove', showPreview);
 resultsList.addEventListener('mouseleave', hidePreview);
 resultsList.addEventListener('wheel', hidePreview);
