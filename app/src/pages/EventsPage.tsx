@@ -47,8 +47,10 @@ export function EventsPage() {
   const total = data?.pages[0]?.total ?? 0
   const nextCursor = data?.pages[data.pages.length - 1]?.nextCursor ?? null
 
-  // Show slow-network banner only if first load takes >3s
-  const showSlowNetwork = useDelayed(3000) && isLoading
+  // Show slow-network banner only if this fetch has been running for >3s.
+  // useDelayed resets whenever isLoading flips to false, so it measures
+  // per-fetch duration — not "has the page been open 3 seconds?".
+  const showSlowNetwork = useDelayed(3000, isLoading)
 
   const { data: agentList = [] } = useQuery({
     queryKey: ['agents'],
