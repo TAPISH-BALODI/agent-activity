@@ -1,0 +1,185 @@
+.meta {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.count {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.showing {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.wrapper {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.table thead th {
+  padding: 10px 14px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.row {
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.row:last-child {
+  border-bottom: none;
+}
+
+.row:hover {
+  background: var(--surface);
+}
+
+.row:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.row.selected {
+  background: var(--surface-raised);
+  border-left: 3px solid var(--accent);
+}
+
+.row td {
+  padding: 10px 14px;
+  vertical-align: middle;
+}
+
+.time {
+  white-space: nowrap;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.timeMain {
+  display: block;
+  font-size: 13px;
+}
+
+.timeDate {
+  display: block;
+  font-size: 11px;
+  opacity: 0.7;
+}
+
+.agent {
+  font-weight: 500;
+  white-space: nowrap;
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tool {
+  font-family: monospace;
+  font-size: 12px;
+  color: var(--accent);
+  white-space: nowrap;
+}
+
+.latency {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.fast { color: #34d399; }
+.medium { color: #fbbf24; }
+.slow { color: #f87171; }
+
+.preview {
+  color: var(--muted);
+  font-size: 12px;
+  max-width: 280px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Skeleton ─────────────────────────────────── */
+
+.skeletonRow td {
+  padding: 12px 14px;
+}
+
+.skeletonCell {
+  display: block;
+  height: 14px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, var(--surface) 25%, var(--surface-raised) 50%, var(--surface) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+}
+
+@keyframes shimmer {
+  from { background-position: 200% 0; }
+  to   { background-position: -200% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeletonCell {
+    animation: none;
+    background: var(--surface-raised);
+  }
+}
+
+/* ── Load More ────────────────────────────────── */
+
+.loadMore {
+  display: flex;
+  justify-content: center;
+  padding: 20px 0;
+}
+
+.loadMoreBtn {
+  padding: 10px 28px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.loadMoreBtn:hover:not(:disabled) {
+  background: var(--surface-raised);
+}
+
+.loadMoreBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ── Responsive ───────────────────────────────── */
+
+@media (max-width: 768px) {
+  .preview { display: none; }
+  .agent { max-width: 110px; }
+}

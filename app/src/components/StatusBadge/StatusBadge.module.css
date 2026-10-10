@@ -1,0 +1,36 @@
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.ok {
+  background: rgba(52, 211, 153, 0.12);
+  color: #34d399;
+}
+
+.blocked {
+  background: rgba(251, 191, 36, 0.12);
+  color: #fbbf24;
+}
+
+.error {
+  background: rgba(248, 113, 113, 0.12);
+  color: #f87171;
+}
+
+.latency {
+  font-weight: 400;
+  font-size: 11px;
+  opacity: 0.85;
+}
+
+.fast { color: #34d399; }
+.medium { color: #fbbf24; }
+.slow { color: #f87171; }
