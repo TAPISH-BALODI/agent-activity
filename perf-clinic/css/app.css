@@ -347,3 +347,23 @@ main {
 .ticker-time {
   color: var(--muted);
 }
+
+/* ── Responsive ──────────────────────────────────────────────────────────── */
+
+@media (max-width: 600px) {
+  .topbar {
+    padding: 8px 16px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .search {
+    flex: 1 1 100%; /* full-width row on small screens */
+    max-width: 100%;
+    order: 3;
+  }
+
+  main {
+    padding: 0 16px 48px;
+  }
+}
