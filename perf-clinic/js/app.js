@@ -120,28 +120,47 @@ function fitSummaries() {
   });
 }
 
+// Pre-build a minute → count Map once instead of filtering 100K events on every scroll.
+const minuteCounts = new Map();
+window.ACTIVITY.forEach((event) => {
+  const minute = event.timestamp.slice(11, 16);
+  minuteCounts.set(minute, (minuteCounts.get(minute) || 0) + 1);
+});
+
+let scrollRafId = null;
+
 function onScroll() {
-  const scrolled = window.scrollY;
-  const max = document.documentElement.scrollHeight - window.innerHeight;
-  progress.style.width = (max > 0 ? (scrolled / max) * 100 : 0) + '%';
-  topbar.classList.toggle('topbar-raised', scrolled > 8);
-  topbar.style.paddingBlock = Math.max(6, 12 - scrolled / 20) + 'px';
-  backToTop.classList.toggle('visible', scrolled > window.innerHeight);
-  resultsList.querySelectorAll('.result-row').forEach((row) => {
-    row.classList.remove('in-focus');
-    const rect = row.getBoundingClientRect();
-    if (rect.top > window.innerHeight * 0.3 && rect.top < window.innerHeight * 0.6) {
-      row.classList.add('in-focus');
+  // Coalesce scroll events — only one RAF callback per frame.
+  if (scrollRafId !== null) return;
+  scrollRafId = requestAnimationFrame(() => {
+    scrollRafId = null;
+    const scrolled = window.scrollY;
+    const max = document.documentElement.scrollHeight - window.innerHeight;
+    progress.style.width = (max > 0 ? (scrolled / max) * 100 : 0) + '%';
+    topbar.classList.toggle('topbar-raised', scrolled > 8);
+    topbar.style.paddingBlock = Math.max(6, 12 - scrolled / 20) + 'px';
+    backToTop.classList.toggle('visible', scrolled > window.innerHeight);
+
+    // Batch: read all rects first, then write classList.
+    const rows = Array.from(resultsList.querySelectorAll('.result-row'));
+    const inViewport = window.innerHeight;
+    let focusedRow = null;
+    const rects = rows.map((row) => row.getBoundingClientRect());
+    rows.forEach((row, i) => {
+      const top = rects[i].top;
+      const inFocus = top > inViewport * 0.3 && top < inViewport * 0.6;
+      row.classList.toggle('in-focus', inFocus);
+      if (inFocus) focusedRow = row;
+    });
+
+    if (focusedRow) {
+      const minute = focusedRow.dataset.minute;
+      const sameMinute = minuteCounts.get(minute) || 0;
+      scrollContext.textContent = minute + ' UTC · ' + sameMinute + ' calls that minute';
+    } else {
+      scrollContext.textContent = '';
     }
   });
-  const focused = resultsList.querySelector('.in-focus');
-  if (focused) {
-    const minute = focused.dataset.minute;
-    const sameMinute = window.ACTIVITY.filter((event) => new Date(event.timestamp).toISOString().slice(11, 16) === minute).length;
-    scrollContext.textContent = minute + ' UTC · ' + sameMinute + ' calls that minute';
-  } else {
-    scrollContext.textContent = '';
-  }
 }
 
 function hidePreview() {
@@ -215,7 +234,7 @@ function closeTicker() {
 }
 
 searchInput.addEventListener('input', () => renderResults(searchInput.value));
-window.addEventListener('scroll', onScroll);
+window.addEventListener('scroll', onScroll, { passive: true });
 window.addEventListener('resize', equalizeCardHeights);
 window.addEventListener('resize', fitSummaries);
 resultsList.addEventListener('mousemove', showPreview);
