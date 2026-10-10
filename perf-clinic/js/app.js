@@ -97,11 +97,19 @@ function rememberViewed(items) {
   }
 }
 
+// Pre-compute a single lowercase searchable string per event at startup.
+// Avoids JSON.stringify(100K events) on every keystroke.
+const searchIndex = window.ACTIVITY.map((event) => ({
+  event,
+  haystack: [event.agent, event.tool, event.status, event.summary].join(' ').toLowerCase(),
+}));
+
 function search(query) {
   const needle = query.trim().toLowerCase();
-  return window.ACTIVITY
-    .filter((event) => JSON.stringify(event).toLowerCase().includes(needle))
-    .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+  const matches = needle
+    ? searchIndex.filter(({ haystack }) => haystack.includes(needle)).map(({ event }) => event)
+    : window.ACTIVITY.slice();
+  return matches.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 }
 
 function renderResults(query) {
@@ -245,7 +253,7 @@ function closeTicker() {
   tickerToggle.textContent = 'Show live calls';
 }
 
-searchInput.addEventListener('input', () => renderResults(searchInput.value));
+searchInput.addEventListener('input', debounce(() => renderResults(searchInput.value), 200));
 window.addEventListener('scroll', onScroll, { passive: true });
 window.addEventListener('resize', debounce(equalizeCardHeights, 100));
 window.addEventListener('resize', debounce(fitSummaries, 100));
