@@ -165,13 +165,21 @@ function onScroll() {
     backToTop.classList.toggle('visible', scrolled > window.innerHeight);
 
     // Batch: read all rects first, then write classList.
+    // Find the single row whose top edge is closest to the viewport midpoint (45%).
     const rows = Array.from(resultsList.querySelectorAll('.result-row'));
-    const inViewport = window.innerHeight;
-    let focusedRow = null;
+    const mid = window.innerHeight * 0.45;
     const rects = rows.map((row) => row.getBoundingClientRect());
+    let closestIdx = -1;
+    let closestDist = Infinity;
+    rects.forEach((rect, i) => {
+      if (rect.top < 0 || rect.bottom > window.innerHeight) return; // off screen
+      const dist = Math.abs(rect.top - mid);
+      if (dist < closestDist) { closestDist = dist; closestIdx = i; }
+    });
+    // Single write pass — only one row gets in-focus at a time
+    let focusedRow = null;
     rows.forEach((row, i) => {
-      const top = rects[i].top;
-      const inFocus = top > inViewport * 0.3 && top < inViewport * 0.6;
+      const inFocus = i === closestIdx;
       row.classList.toggle('in-focus', inFocus);
       if (inFocus) focusedRow = row;
     });
