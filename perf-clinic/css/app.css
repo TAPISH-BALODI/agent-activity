@@ -98,6 +98,7 @@ main {
 .hero-image {
   display: block;
   width: 100%;
+  height: auto; /* let aspect-ratio scale from the width= attribute; without this the fixed height="950" attribute prevents proportional scaling */
 }
 
 .hero-copy {
