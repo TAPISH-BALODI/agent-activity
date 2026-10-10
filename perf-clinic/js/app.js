@@ -89,12 +89,15 @@ function loadViewed() {
 
 function rememberViewed(items) {
   const viewed = loadViewed();
+  let changed = false;
   for (const item of items) {
     if (!viewed.includes(item.id)) {
       viewed.push(item.id);
+      changed = true;
     }
-    localStorage.setItem(storageKey, JSON.stringify(viewed));
   }
+  // Single write after accumulating all IDs — was 200 writes in the original.
+  if (changed) localStorage.setItem(storageKey, JSON.stringify(viewed));
 }
 
 // Pre-compute a single lowercase searchable string per event at startup.

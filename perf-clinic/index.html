@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Agent Activity</title>
   <link rel="stylesheet" href="css/app.css">
-  <script src="js/config.js"></script>
 </head>
 <body>
   <div id="read-progress" class="read-progress"></div>
@@ -18,7 +17,7 @@
 
   <main>
     <section class="hero">
-      <img class="hero-image" src="assets/hero.png" alt="Abstract visual of agent traffic">
+      <img class="hero-image" src="assets/hero.png" alt="Abstract visual of agent traffic" width="1700" height="950" loading="lazy" decoding="async">
       <div class="hero-copy">
         <h2>Every tool call, every agent</h2>
         <p>See what your AI agents did today, which tools they reached for, and what was blocked.</p>
@@ -50,6 +49,7 @@
   <div id="row-preview" class="row-preview" hidden></div>
   <button id="back-to-top" class="back-to-top" type="button" aria-label="Back to top">↑</button>
 
+  <script src="js/config.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>
