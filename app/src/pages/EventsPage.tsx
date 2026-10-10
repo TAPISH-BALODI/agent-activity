@@ -1,5 +1,4 @@
-import { useState } from 'react'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import { getEvents, getAgents } from '../api/events'
 import { useUrlState } from '../hooks/useUrlState'
 import { useDelayed } from '../hooks/useDelayed'
@@ -8,55 +7,47 @@ import { FilterBar } from '../components/FilterBar/FilterBar'
 import { DetailPanel } from '../components/DetailPanel/DetailPanel'
 import { Histogram } from '../components/Histogram/Histogram'
 import { EmptyState, ErrorState, SlowNetworkBanner } from '../components/States/States'
-import type { EventItem } from '../types'
 import styles from './EventsPage.module.css'
 
 export function EventsPage() {
-  const { state, setFilters, setCursor, setId } = useUrlState()
-  const queryClient = useQueryClient()
+  const { state, setFilters, setId } = useUrlState()
 
-  // Accumulated events across pages
-  const [pages, setPages] = useState<EventItem[][]>([])
-  const [nextCursor, setNextCursor] = useState<string | null>(null)
-  const [total, setTotal] = useState(0)
-  const [isFetchingMore, setIsFetchingMore] = useState(false)
-
-  // Key changes whenever filters change — resets the accumulated pages
-  const filterKey = JSON.stringify({
+  const filterParams = {
     q: state.q,
     agents: state.agents,
     status: state.status,
     from: state.from,
     to: state.to,
-  })
+  }
 
-  const { isLoading, isError, error, refetch } = useQuery({
-    queryKey: ['events', filterKey, state.cursor],
-    queryFn: async () => {
-      const res = await getEvents({
-        q: state.q,
-        agents: state.agents,
-        status: state.status,
-        from: state.from,
-        to: state.to,
-        cursor: state.cursor,
+  const {
+    data,
+    isLoading,
+    isFetchingNextPage,
+    isError,
+    error,
+    refetch,
+    fetchNextPage,
+    hasNextPage,
+  } = useInfiniteQuery({
+    queryKey: ['events', filterParams],
+    queryFn: ({ pageParam }) =>
+      getEvents({
+        ...filterParams,
+        cursor: pageParam as string | undefined,
         limit: '50',
-      })
-      // First page: reset accumulated state
-      if (!state.cursor) {
-        setPages([res.items])
-      } else {
-        setPages((prev) => [...prev, res.items])
-      }
-      setNextCursor(res.nextCursor)
-      setTotal(res.total)
-      return res
-    },
-    retry: 1,
+      }),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
     staleTime: 30_000,
+    retry: 1,
   })
 
-  const events = pages.flat()
+  const events = data?.pages.flatMap((p) => p.items) ?? []
+  const total = data?.pages[0]?.total ?? 0
+  const nextCursor = data?.pages[data.pages.length - 1]?.nextCursor ?? null
+
+  // Show slow-network banner only if first load takes >3s
   const showSlowNetwork = useDelayed(3000) && isLoading
 
   const { data: agentList = [] } = useQuery({
@@ -65,31 +56,8 @@ export function EventsPage() {
     staleTime: 5 * 60_000,
   })
 
-  function handleLoadMore() {
-    if (!nextCursor || isFetchingMore) return
-    setIsFetchingMore(true)
-    getEvents({
-      q: state.q,
-      agents: state.agents,
-      status: state.status,
-      from: state.from,
-      to: state.to,
-      cursor: nextCursor,
-      limit: '50',
-    })
-      .then((res) => {
-        setPages((prev) => [...prev, res.items])
-        setNextCursor(res.nextCursor)
-      })
-      .finally(() => setIsFetchingMore(false))
-  }
-
   function handleFiltersChange(patch: Parameters<typeof setFilters>[0]) {
-    setPages([])
-    setNextCursor(null)
     setFilters(patch)
-    // Invalidate events cache on filter change
-    queryClient.invalidateQueries({ queryKey: ['events'] })
   }
 
   const hasFilters = !!(state.q || state.agents.length || state.status || state.from || state.to)
@@ -115,16 +83,12 @@ export function EventsPage() {
 
         {showSlowNetwork && <SlowNetworkBanner />}
 
-        {isLoading && events.length === 0 && <SkeletonTable />}
+        {isLoading && <SkeletonTable />}
 
         {isError && (
           <ErrorState
             message={(error as Error).message}
-            onRetry={() => {
-              setPages([])
-              setNextCursor(null)
-              refetch()
-            }}
+            onRetry={() => refetch()}
           />
         )}
 
@@ -138,9 +102,11 @@ export function EventsPage() {
             selectedId={state.id}
             total={total}
             nextCursor={nextCursor}
-            isFetchingMore={isFetchingMore}
+            isFetchingMore={isFetchingNextPage}
             onRowClick={setId}
-            onLoadMore={handleLoadMore}
+            onLoadMore={() => {
+              if (hasNextPage && !isFetchingNextPage) fetchNextPage()
+            }}
           />
         )}
       </main>
